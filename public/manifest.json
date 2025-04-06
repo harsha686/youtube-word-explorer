@@ -1,0 +1,27 @@
+
+{
+  "manifest_version": 3,
+  "name": "YouTube Word Explorer",
+  "version": "1.0",
+  "description": "Search for words in YouTube videos and jump to relevant timestamps",
+  "permissions": ["activeTab", "storage"],
+  "action": {
+    "default_popup": "index.html",
+    "default_icon": {
+      "16": "icon16.png",
+      "48": "icon48.png",
+      "128": "icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icon16.png",
+    "48": "icon48.png",
+    "128": "icon128.png"
+  },
+  "content_scripts": [
+    {
+      "matches": ["*://*.youtube.com/*"],
+      "js": ["content.js"]
+    }
+  ]
+}
