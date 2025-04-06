@@ -7,6 +7,7 @@
       // Extract video ID from URL
       const videoId = extractVideoIdFromUrl(window.location.href);
       sendResponse({ videoId });
+      return true; // This is important to keep the message channel open for async responses
     }
   });
 

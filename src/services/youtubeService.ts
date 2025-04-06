@@ -1,20 +1,24 @@
+
 import { VideoTranscript, SearchResult } from "@/types";
+
+// Declare chrome for TypeScript if it doesn't exist in the environment
+declare const chrome: any;
 
 // Function to get the real video ID from the current tab
 export const getCurrentVideoId = async (): Promise<string> => {
   return new Promise((resolve, reject) => {
     try {
       // Check if we're in a Chrome extension environment
-      if (chrome && chrome.tabs) {
+      if (typeof chrome !== 'undefined' && chrome.tabs) {
         // Query the active tab in the current window
-        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        chrome.tabs.query({ active: true, currentWindow: true }, (tabs: any[]) => {
           const currentTab = tabs[0];
           
           // Send message to content script to get video ID
           chrome.tabs.sendMessage(
             currentTab.id!,
             { action: "getVideoId" },
-            (response) => {
+            (response: { videoId?: string }) => {
               if (chrome.runtime.lastError) {
                 console.error(chrome.runtime.lastError);
                 // Fallback to demo video if there's an error
