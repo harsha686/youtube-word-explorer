@@ -1,4 +1,4 @@
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 
 interface VideoPlayerProps {
@@ -10,47 +10,71 @@ interface VideoPlayerProps {
 const VideoPlayer = ({ videoId, currentTime, onTimeUpdate }: VideoPlayerProps) => {
   const playerRef = useRef<HTMLDivElement>(null);
   const playerInstanceRef = useRef<any>(null);
+  const [playerReady, setPlayerReady] = useState(false);
+  const intervalRef = useRef<number | null>(null);
 
   useEffect(() => {
-    // Load the YouTube IFrame Player API
-    const tag = document.createElement("script");
-    tag.src = "https://www.youtube.com/iframe_api";
-    const firstScriptTag = document.getElementsByTagName("script")[0];
-    if (firstScriptTag.parentNode) {
-      firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+    if (!document.getElementById('youtube-api')) {
+      const tag = document.createElement("script");
+      tag.id = 'youtube-api';
+      tag.src = "https://www.youtube.com/iframe_api";
+      const firstScriptTag = document.getElementsByTagName("script")[0];
+      if (firstScriptTag.parentNode) {
+        firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+      }
     }
+  }, []);
 
-    const onYouTubeIframeAPIReady = () => {
-      // In a real extension, we would not create a player here but control the existing one
+  useEffect(() => {
+    const initializePlayer = () => {
+      if (!playerRef.current) return;
+      
+      if (playerInstanceRef.current) {
+        playerInstanceRef.current.destroy();
+      }
+      
       playerInstanceRef.current = new (window as any).YT.Player(playerRef.current, {
         videoId: videoId,
+        playerVars: {
+          autoplay: 0,
+          controls: 1,
+          modestbranding: 1,
+          rel: 0
+        },
         events: {
-          onReady: () => {
+          onReady: (event: any) => {
             console.log("Player ready");
+            setPlayerReady(true);
           },
           onStateChange: (event: any) => {
+            if (intervalRef.current) {
+              window.clearInterval(intervalRef.current);
+              intervalRef.current = null;
+            }
+            
             if (event.data === (window as any).YT.PlayerState.PLAYING && onTimeUpdate) {
-              const interval = setInterval(() => {
-                const currentTime = playerInstanceRef.current.getCurrentTime();
-                onTimeUpdate(currentTime);
+              intervalRef.current = window.setInterval(() => {
+                const time = event.target.getCurrentTime();
+                onTimeUpdate(time);
               }, 1000);
-              
-              return () => clearInterval(interval);
             }
           }
         }
       });
     };
 
-    // If the API is already loaded, initialize the player
     if ((window as any).YT && (window as any).YT.Player) {
-      onYouTubeIframeAPIReady();
+      initializePlayer();
     } else {
-      // Otherwise wait for the API to load
-      (window as any).onYouTubeIframeAPIReady = onYouTubeIframeAPIReady;
+      (window as any).onYouTubeIframeAPIReady = initializePlayer;
     }
 
     return () => {
+      if (intervalRef.current) {
+        window.clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+      
       if (playerInstanceRef.current) {
         playerInstanceRef.current.destroy();
       }
@@ -58,11 +82,18 @@ const VideoPlayer = ({ videoId, currentTime, onTimeUpdate }: VideoPlayerProps) =
   }, [videoId, onTimeUpdate]);
 
   useEffect(() => {
-    if (playerInstanceRef.current && currentTime !== null) {
-      playerInstanceRef.current.seekTo(currentTime, true);
-      playerInstanceRef.current.playVideo();
+    if (playerReady && playerInstanceRef.current && typeof currentTime === 'number') {
+      try {
+        const player = playerInstanceRef.current;
+        if (player && typeof player.seekTo === 'function') {
+          player.seekTo(currentTime, true);
+          player.playVideo();
+        }
+      } catch (error) {
+        console.error("Error seeking to time:", error);
+      }
     }
-  }, [currentTime]);
+  }, [currentTime, playerReady]);
 
   return (
     <Card className="w-full overflow-hidden">
