@@ -1,12 +1,58 @@
-
 import { VideoTranscript, SearchResult } from "@/types";
 
-// This is a mock service for demo purposes
-// In a real extension, this would interact with YouTube's APIs
+// Function to get the real video ID from the current tab
+export const getCurrentVideoId = async (): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    try {
+      // Check if we're in a Chrome extension environment
+      if (chrome && chrome.tabs) {
+        // Query the active tab in the current window
+        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+          const currentTab = tabs[0];
+          
+          // Send message to content script to get video ID
+          chrome.tabs.sendMessage(
+            currentTab.id!,
+            { action: "getVideoId" },
+            (response) => {
+              if (chrome.runtime.lastError) {
+                console.error(chrome.runtime.lastError);
+                // Fallback to demo video if there's an error
+                resolve("dQw4w9WgXcQ");
+              } else if (response && response.videoId) {
+                resolve(response.videoId);
+              } else {
+                // Fallback to demo video if no ID found
+                resolve("dQw4w9WgXcQ");
+              }
+            }
+          );
+        });
+      } else {
+        // Not in extension environment, use demo video
+        resolve("dQw4w9WgXcQ");
+      }
+    } catch (error) {
+      console.error("Error getting current video ID:", error);
+      // Fallback to demo video
+      resolve("dQw4w9WgXcQ");
+    }
+  });
+};
+
+// Function to get transcript for a YouTube video
 export const getVideoTranscript = async (videoId: string): Promise<VideoTranscript[]> => {
-  // In a real extension, this would fetch the actual transcript from YouTube
-  // For demo purposes, we'll return a mock transcript
-  return mockTranscript;
+  // In a real extension, this would fetch actual transcripts from YouTube API
+  // For this demo, we'll still use mock data, but in a real implementation,
+  // you would use YouTube's caption API or a third-party service
+  
+  // For demo purposes: use different mock transcripts for different videos
+  if (videoId === "dQw4w9WgXcQ") {
+    return mockTranscript;
+  } else {
+    // Generate a simple placeholder transcript for other videos
+    return generatePlaceholderTranscript();
+  }
 };
 
 export const searchInTranscript = (
@@ -48,6 +94,20 @@ export const formatTime = (seconds: number): string => {
   }
   
   return `${minutes}:${secs.toString().padStart(2, '0')}`;
+};
+
+// Generate a placeholder transcript for videos we don't have actual data for
+const generatePlaceholderTranscript = (): VideoTranscript[] => {
+  const transcript: VideoTranscript[] = [];
+  // Create 20 placeholder transcript entries
+  for (let i = 0; i < 20; i++) {
+    transcript.push({
+      text: `This is a placeholder transcript segment ${i+1}. In a real extension, this would contain actual video content.`,
+      start: i * 30,
+      duration: 30
+    });
+  }
+  return transcript;
 };
 
 // For demo purposes - this would be replaced with actual YouTube API calls

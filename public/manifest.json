@@ -23,5 +23,8 @@
       "matches": ["*://*.youtube.com/*"],
       "js": ["content.js"]
     }
+  ],
+  "host_permissions": [
+    "*://*.youtube.com/*"
   ]
 }

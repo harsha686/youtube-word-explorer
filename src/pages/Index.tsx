@@ -1,7 +1,6 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { SearchResult } from "@/types";
-import { getVideoTranscript, searchInTranscript } from "@/services/youtubeService";
+import { getVideoTranscript, searchInTranscript, getCurrentVideoId } from "@/services/youtubeService";
 import SearchBar from "@/components/SearchBar";
 import SearchResults from "@/components/SearchResults";
 import VideoPlayer from "@/components/VideoPlayer";
@@ -17,16 +16,28 @@ const Index = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [activeTab, setActiveTab] = useState("demo");
+  const [currentVideoId, setCurrentVideoId] = useState<string>("dQw4w9WgXcQ"); // Default to demo video
   const { toast } = useToast();
   
-  // In a real extension, we would get the current video ID from the YouTube page
-  const demoVideoId = "dQw4w9WgXcQ"; // Just a demo video ID
+  useEffect(() => {
+    // Get the current video ID when the extension is opened
+    const fetchCurrentVideoId = async () => {
+      try {
+        const videoId = await getCurrentVideoId();
+        setCurrentVideoId(videoId);
+      } catch (error) {
+        console.error("Error fetching current video ID:", error);
+        // Keep using the default demo video ID if there's an error
+      }
+    };
+    
+    fetchCurrentVideoId();
+  }, []);
 
   const handleSearch = async (searchTerm: string) => {
     setIsLoading(true);
     try {
-      // In a real extension, we would extract the video ID from the current page URL
-      const transcript = await getVideoTranscript(demoVideoId);
+      const transcript = await getVideoTranscript(currentVideoId);
       const results = searchInTranscript(transcript, searchTerm);
       setSearchResults(results);
       
@@ -90,7 +101,7 @@ const Index = () => {
             {activeTab === "demo" && (
               <>
                 <VideoPlayer 
-                  videoId={demoVideoId}
+                  videoId={currentVideoId}
                   currentTime={currentTime}
                   onTimeUpdate={(time) => {}}
                 />
