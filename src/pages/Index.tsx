@@ -8,12 +8,16 @@ import VideoPlayer from "@/components/VideoPlayer";
 import ExtensionInfo from "@/components/ExtensionInfo";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Check } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 const Index = () => {
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [activeTab, setActiveTab] = useState("demo");
+  const { toast } = useToast();
   
   // In a real extension, we would get the current video ID from the YouTube page
   const demoVideoId = "dQw4w9WgXcQ"; // Just a demo video ID
@@ -25,8 +29,28 @@ const Index = () => {
       const transcript = await getVideoTranscript(demoVideoId);
       const results = searchInTranscript(transcript, searchTerm);
       setSearchResults(results);
+      
+      // Show alert message if results are found
+      if (results.length > 0) {
+        toast({
+          title: "Word found!",
+          description: `Yes, "${searchTerm}" is present in this video. You can proceed.`,
+          variant: "default",
+        });
+      } else {
+        toast({
+          title: "Word not found",
+          description: `The term "${searchTerm}" was not found in this video.`,
+          variant: "destructive",
+        });
+      }
     } catch (error) {
       console.error("Error searching transcript:", error);
+      toast({
+        title: "Search Error",
+        description: "Failed to search the video transcript. Please try again.",
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
     }
@@ -53,6 +77,15 @@ const Index = () => {
           </TabsList>
           <TabsContent value="demo" className="space-y-4 pt-4">
             <SearchBar onSearch={handleSearch} isLoading={isLoading} />
+            
+            {searchResults.length > 0 && (
+              <Alert className="bg-green-50 border-green-200">
+                <Check className="h-4 w-4 text-green-600" />
+                <AlertDescription className="text-green-700">
+                  Yes, the word is present. You can proceed.
+                </AlertDescription>
+              </Alert>
+            )}
             
             {activeTab === "demo" && (
               <>
