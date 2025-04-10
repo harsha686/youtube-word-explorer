@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { SearchResult } from "@/types";
 import { getVideoTranscript, searchInTranscript, getCurrentVideoId } from "@/services/youtubeService";
@@ -23,7 +24,9 @@ const Index = () => {
     // Get the current video ID when the extension is opened
     const fetchCurrentVideoId = async () => {
       try {
+        console.log("Fetching current video ID...");
         const videoId = await getCurrentVideoId();
+        console.log("Current video ID:", videoId);
         setCurrentVideoId(videoId);
       } catch (error) {
         console.error("Error fetching current video ID:", error);
@@ -35,10 +38,14 @@ const Index = () => {
   }, []);
 
   const handleSearch = async (searchTerm: string) => {
+    console.log(`Searching for: "${searchTerm}" in video: ${currentVideoId}`);
     setIsLoading(true);
     try {
       const transcript = await getVideoTranscript(currentVideoId);
+      console.log(`Retrieved transcript with ${transcript.length} entries`);
+      
       const results = searchInTranscript(transcript, searchTerm);
+      console.log(`Search results:`, results);
       setSearchResults(results);
       
       // Show alert message if results are found
