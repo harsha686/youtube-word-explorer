@@ -20,12 +20,13 @@ export const getCurrentVideoId = async (): Promise<string> => {
             { action: "getVideoId" },
             (response: { videoId?: string }) => {
               if (chrome.runtime.lastError) {
-                console.error(chrome.runtime.lastError);
+                console.error("Content script error:", chrome.runtime.lastError);
                 // Fallback to demo video if there's an error
                 resolve("dQw4w9WgXcQ");
               } else if (response && response.videoId) {
                 resolve(response.videoId);
               } else {
+                console.log("No video ID found, using demo video");
                 // Fallback to demo video if no ID found
                 resolve("dQw4w9WgXcQ");
               }
@@ -34,12 +35,75 @@ export const getCurrentVideoId = async (): Promise<string> => {
         });
       } else {
         // Not in extension environment, use demo video
+        console.log("Not in extension environment, using demo video");
         resolve("dQw4w9WgXcQ");
       }
     } catch (error) {
       console.error("Error getting current video ID:", error);
       // Fallback to demo video
       resolve("dQw4w9WgXcQ");
+    }
+  });
+};
+
+// Function to get current time of the video
+export const getCurrentVideoTime = async (): Promise<number> => {
+  return new Promise((resolve) => {
+    try {
+      if (typeof chrome !== 'undefined' && chrome.tabs) {
+        chrome.tabs.query({ active: true, currentWindow: true }, (tabs: any[]) => {
+          const currentTab = tabs[0];
+          
+          chrome.tabs.sendMessage(
+            currentTab.id!,
+            { action: "getCurrentTime" },
+            (response: { currentTime?: number }) => {
+              if (chrome.runtime.lastError) {
+                console.error("Content script error:", chrome.runtime.lastError);
+                resolve(0);
+              } else if (response && typeof response.currentTime === 'number') {
+                resolve(response.currentTime);
+              } else {
+                resolve(0);
+              }
+            }
+          );
+        });
+      } else {
+        resolve(0);
+      }
+    } catch (error) {
+      console.error("Error getting current video time:", error);
+      resolve(0);
+    }
+  });
+};
+
+// Function to seek to a specific time in the YouTube video
+export const seekToTime = async (timestamp: number): Promise<void> => {
+  return new Promise((resolve) => {
+    try {
+      if (typeof chrome !== 'undefined' && chrome.tabs) {
+        chrome.tabs.query({ active: true, currentWindow: true }, (tabs: any[]) => {
+          const currentTab = tabs[0];
+          
+          chrome.tabs.sendMessage(
+            currentTab.id!,
+            { action: "seekToTime", timestamp },
+            () => {
+              if (chrome.runtime.lastError) {
+                console.error("Content script error:", chrome.runtime.lastError);
+              }
+              resolve();
+            }
+          );
+        });
+      } else {
+        resolve();
+      }
+    } catch (error) {
+      console.error("Error seeking to time:", error);
+      resolve();
     }
   });
 };

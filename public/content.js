@@ -43,6 +43,52 @@
       }
       return true;
     }
+    
+    if (request.action === "seekToTime") {
+      try {
+        const timestamp = request.timestamp;
+        console.log("Seeking to timestamp:", timestamp);
+        
+        // Get the video element
+        const videoElement = document.querySelector('video');
+        
+        if (videoElement) {
+          // Directly set the time on the HTML5 video element
+          videoElement.currentTime = timestamp;
+          
+          // Also try to play the video
+          videoElement.play().catch(e => console.error("Could not play video:", e));
+        } else {
+          console.error("Video element not found");
+        }
+        
+        // Fallback for YouTube's API (in case direct manipulation doesn't work)
+        if (window.location.hostname.includes('youtube.com')) {
+          // YouTube's player might be accessible through the DOM
+          const script = document.createElement('script');
+          script.textContent = `
+            try {
+              // Try to access YouTube's player instance
+              const player = document.querySelector('video');
+              if (player) {
+                player.currentTime = ${timestamp};
+                player.play();
+              }
+            } catch (e) {
+              console.error("Error in injected script:", e);
+            }
+          `;
+          document.documentElement.appendChild(script);
+          script.remove();
+        }
+        
+        sendResponse({ success: true });
+      } catch (error) {
+        console.error("Error seeking to time:", error);
+        sendResponse({ success: false, error: error.message });
+      }
+      return true;
+    }
   });
 
   // Function to extract YouTube video ID from URL

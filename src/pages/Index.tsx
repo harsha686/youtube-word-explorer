@@ -1,7 +1,13 @@
 
 import { useState, useEffect } from "react";
 import { SearchResult } from "@/types";
-import { getVideoTranscript, searchInTranscript, getCurrentVideoId } from "@/services/youtubeService";
+import { 
+  getVideoTranscript, 
+  searchInTranscript, 
+  getCurrentVideoId, 
+  getCurrentVideoTime,
+  seekToTime 
+} from "@/services/youtubeService";
 import SearchBar from "@/components/SearchBar";
 import SearchResults from "@/components/SearchResults";
 import VideoPlayer from "@/components/VideoPlayer";
@@ -28,6 +34,11 @@ const Index = () => {
         const videoId = await getCurrentVideoId();
         console.log("Current video ID:", videoId);
         setCurrentVideoId(videoId);
+        
+        // Also get the current time
+        const time = await getCurrentVideoTime();
+        console.log("Current video time:", time);
+        setCurrentTime(time);
       } catch (error) {
         console.error("Error fetching current video ID:", error);
         // Keep using the default demo video ID if there's an error
@@ -74,8 +85,22 @@ const Index = () => {
     }
   };
 
-  const handleJumpToTimestamp = (timestamp: number) => {
+  const handleJumpToTimestamp = async (timestamp: number) => {
+    console.log(`Jumping to timestamp: ${timestamp}`);
     setCurrentTime(timestamp);
+    
+    // Also send a message to the content script to jump to that timestamp
+    // This will affect the actual YouTube video in the tab
+    try {
+      await seekToTime(timestamp);
+    } catch (error) {
+      console.error("Error seeking to time:", error);
+      toast({
+        title: "Seek Error",
+        description: "Failed to jump to the specified timestamp in the YouTube video.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -110,7 +135,7 @@ const Index = () => {
                 <VideoPlayer 
                   videoId={currentVideoId}
                   currentTime={currentTime}
-                  onTimeUpdate={(time) => {}}
+                  onTimeUpdate={(time) => setCurrentTime(time)}
                 />
                 
                 <Separator className="my-4" />
