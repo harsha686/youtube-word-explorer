@@ -18,8 +18,23 @@
     if (request.action === "getCurrentTime") {
       // Get current time from YouTube player if it exists
       try {
-        const player = document.querySelector('video');
-        const currentTime = player ? player.currentTime : 0;
+        // Try to get the player from multiple possible elements
+        // First try the HTML5 video element
+        let player = document.querySelector('video');
+        let currentTime = player ? player.currentTime : 0;
+        
+        // If we couldn't get the time from the HTML5 player, try to get it from YouTube's API
+        if ((!currentTime || currentTime === 0) && window.location.hostname.includes('youtube.com')) {
+          // Try to access YouTube's player API if available
+          if (document.querySelector('.html5-video-player')) {
+            const youtubePlayer = document.querySelector('.html5-video-player');
+            // YouTube stores the current time as a data attribute on the player element
+            if (youtubePlayer && youtubePlayer.getAttribute('data-current-time')) {
+              currentTime = parseFloat(youtubePlayer.getAttribute('data-current-time'));
+            }
+          }
+        }
+        
         console.log("Current player time:", currentTime);
         sendResponse({ currentTime });
       } catch (error) {

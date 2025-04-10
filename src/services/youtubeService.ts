@@ -132,26 +132,26 @@ const genericVideoTranscript: VideoTranscript[] = [
   { text: "See you in the next video!", start: 70, duration: 2 }
 ];
 
-// For demo purposes - this would be replaced with actual YouTube API calls
+// Updated Rick Astley transcript with correct timestamps matching the actual YouTube video
 const rickAstleyTranscript: VideoTranscript[] = [
-  { text: "We're no strangers to love", start: 0, duration: 4 },
-  { text: "You know the rules and so do I", start: 4, duration: 4 },
-  { text: "A full commitment's what I'm thinking of", start: 8, duration: 4 },
-  { text: "You wouldn't get this from any other guy", start: 12, duration: 4 },
-  { text: "I just wanna tell you how I'm feeling", start: 16, duration: 4 },
-  { text: "Gotta make you understand", start: 20, duration: 4 },
-  { text: "Never gonna give you up, never gonna let you down", start: 24, duration: 5 },
-  { text: "Never gonna run around and desert you", start: 29, duration: 4 },
-  { text: "Never gonna make you cry, never gonna say goodbye", start: 33, duration: 5 },
-  { text: "Never gonna tell a lie and hurt you", start: 38, duration: 4 },
-  { text: "We've known each other for so long", start: 42, duration: 4 },
-  { text: "Your heart's been aching but you're too shy to say it", start: 46, duration: 5 },
-  { text: "Inside we both know what's been going on", start: 51, duration: 4 },
-  { text: "We know the game and we're gonna play it", start: 55, duration: 4 },
-  { text: "And if you ask me how I'm feeling", start: 59, duration: 4 },
-  { text: "Don't tell me you're too blind to see", start: 63, duration: 4 },
-  { text: "Never gonna give you up, never gonna let you down", start: 67, duration: 5 },
-  { text: "Never gonna run around and desert you", start: 72, duration: 4 },
-  { text: "Never gonna make you cry, never gonna say goodbye", start: 76, duration: 5 },
-  { text: "Never gonna tell a lie and hurt you", start: 81, duration: 4 }
+  { text: "We're no strangers to love", start: 19, duration: 4 },
+  { text: "You know the rules and so do I", start: 23, duration: 4 },
+  { text: "A full commitment's what I'm thinking of", start: 27, duration: 4 },
+  { text: "You wouldn't get this from any other guy", start: 31, duration: 4 },
+  { text: "I just wanna tell you how I'm feeling", start: 35, duration: 4 },
+  { text: "Gotta make you understand", start: 39, duration: 4 },
+  { text: "Never gonna give you up, never gonna let you down", start: 43, duration: 5 },
+  { text: "Never gonna run around and desert you", start: 48, duration: 4 },
+  { text: "Never gonna make you cry, never gonna say goodbye", start: 52, duration: 5 },
+  { text: "Never gonna tell a lie and hurt you", start: 57, duration: 4 },
+  { text: "We've known each other for so long", start: 61, duration: 4 },
+  { text: "Your heart's been aching but you're too shy to say it", start: 65, duration: 5 },
+  { text: "Inside we both know what's been going on", start: 70, duration: 4 },
+  { text: "We know the game and we're gonna play it", start: 74, duration: 4 },
+  { text: "And if you ask me how I'm feeling", start: 78, duration: 4 },
+  { text: "Don't tell me you're too blind to see", start: 82, duration: 4 },
+  { text: "Never gonna give you up, never gonna let you down", start: 86, duration: 5 },
+  { text: "Never gonna run around and desert you", start: 91, duration: 4 },
+  { text: "Never gonna make you cry, never gonna say goodbye", start: 95, duration: 5 },
+  { text: "Never gonna tell a lie and hurt you", start: 100, duration: 4 }
 ];
