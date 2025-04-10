@@ -14,6 +14,20 @@
       sendResponse({ videoId });
       return true; // This is important to keep the message channel open for async responses
     }
+    
+    if (request.action === "getCurrentTime") {
+      // Get current time from YouTube player if it exists
+      try {
+        const player = document.querySelector('video');
+        const currentTime = player ? player.currentTime : 0;
+        console.log("Current player time:", currentTime);
+        sendResponse({ currentTime });
+      } catch (error) {
+        console.error("Error getting current time:", error);
+        sendResponse({ currentTime: 0 });
+      }
+      return true;
+    }
   });
 
   // Function to extract YouTube video ID from URL

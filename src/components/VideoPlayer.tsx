@@ -1,3 +1,4 @@
+
 import { useRef, useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 
@@ -12,6 +13,7 @@ const VideoPlayer = ({ videoId, currentTime, onTimeUpdate }: VideoPlayerProps) =
   const playerInstanceRef = useRef<any>(null);
   const [playerReady, setPlayerReady] = useState(false);
   const intervalRef = useRef<number | null>(null);
+  const lastTimeRef = useRef<number>(currentTime);
 
   useEffect(() => {
     if (!document.getElementById('youtube-api')) {
@@ -45,6 +47,11 @@ const VideoPlayer = ({ videoId, currentTime, onTimeUpdate }: VideoPlayerProps) =
           onReady: (event: any) => {
             console.log("Player ready");
             setPlayerReady(true);
+            
+            // Set initial time if provided
+            if (currentTime > 0) {
+              event.target.seekTo(currentTime, true);
+            }
           },
           onStateChange: (event: any) => {
             if (intervalRef.current) {
@@ -56,7 +63,7 @@ const VideoPlayer = ({ videoId, currentTime, onTimeUpdate }: VideoPlayerProps) =
               intervalRef.current = window.setInterval(() => {
                 const time = event.target.getCurrentTime();
                 onTimeUpdate(time);
-              }, 1000);
+              }, 500);
             }
           }
         }
@@ -82,12 +89,17 @@ const VideoPlayer = ({ videoId, currentTime, onTimeUpdate }: VideoPlayerProps) =
   }, [videoId, onTimeUpdate]);
 
   useEffect(() => {
-    if (playerReady && playerInstanceRef.current && typeof currentTime === 'number') {
+    // Only seek if currentTime is different from lastTimeRef
+    if (playerReady && playerInstanceRef.current && 
+        typeof currentTime === 'number' && 
+        currentTime !== lastTimeRef.current) {
       try {
         const player = playerInstanceRef.current;
         if (player && typeof player.seekTo === 'function') {
+          console.log(`Seeking to timestamp: ${currentTime} seconds`);
           player.seekTo(currentTime, true);
           player.playVideo();
+          lastTimeRef.current = currentTime;
         }
       } catch (error) {
         console.error("Error seeking to time:", error);

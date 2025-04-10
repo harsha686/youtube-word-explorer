@@ -1,3 +1,4 @@
+
 import { VideoTranscript, SearchResult } from "@/types";
 
 // Declare chrome for TypeScript if it doesn't exist in the environment
