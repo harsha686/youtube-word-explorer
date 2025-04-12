@@ -3,6 +3,47 @@
 (function() {
   console.log("YouTube Word Explorer content script loaded");
   
+  // Function to check if we're on a YouTube video page
+  function isYouTubeVideoPage() {
+    return window.location.hostname.includes('youtube.com') && 
+           (window.location.pathname.includes('/watch') || 
+            window.location.pathname.includes('/embed/'));
+  }
+  
+  // Add a visible debug element to the page during development
+  function addDebugInfo(message) {
+    console.log("Debug:", message);
+    
+    // Only for development, comment this out for production
+    // const debugElement = document.createElement('div');
+    // debugElement.style.position = 'fixed';
+    // debugElement.style.top = '10px';
+    // debugElement.style.right = '10px';
+    // debugElement.style.zIndex = '9999';
+    // debugElement.style.background = 'rgba(0,0,0,0.7)';
+    // debugElement.style.color = 'white';
+    // debugElement.style.padding = '10px';
+    // debugElement.style.borderRadius = '5px';
+    // debugElement.textContent = message;
+    // document.body.appendChild(debugElement);
+  }
+  
+  // Initialize on page load
+  function initialize() {
+    if (isYouTubeVideoPage()) {
+      addDebugInfo("YouTube Word Explorer active on video page");
+    } else {
+      addDebugInfo("Not a YouTube video page");
+    }
+  }
+  
+  // Run initialization after DOM is fully loaded
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initialize);
+  } else {
+    initialize();
+  }
+  
   // Listen for messages from the extension popup
   chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     console.log("Message received in content script:", request);
@@ -23,23 +64,11 @@
         let player = document.querySelector('video');
         let currentTime = player ? player.currentTime : 0;
         
-        // If we couldn't get the time from the HTML5 player, try to get it from YouTube's API
-        if ((!currentTime || currentTime === 0) && window.location.hostname.includes('youtube.com')) {
-          // Try to access YouTube's player API if available
-          if (document.querySelector('.html5-video-player')) {
-            const youtubePlayer = document.querySelector('.html5-video-player');
-            // YouTube stores the current time as a data attribute on the player element
-            if (youtubePlayer && youtubePlayer.getAttribute('data-current-time')) {
-              currentTime = parseFloat(youtubePlayer.getAttribute('data-current-time'));
-            }
-          }
-        }
-        
         console.log("Current player time:", currentTime);
         sendResponse({ currentTime });
       } catch (error) {
         console.error("Error getting current time:", error);
-        sendResponse({ currentTime: 0 });
+        sendResponse({ currentTime: 0, error: error.message });
       }
       return true;
     }
@@ -58,31 +87,12 @@
           
           // Also try to play the video
           videoElement.play().catch(e => console.error("Could not play video:", e));
+          
+          sendResponse({ success: true });
         } else {
           console.error("Video element not found");
+          sendResponse({ success: false, error: "Video element not found" });
         }
-        
-        // Fallback for YouTube's API (in case direct manipulation doesn't work)
-        if (window.location.hostname.includes('youtube.com')) {
-          // YouTube's player might be accessible through the DOM
-          const script = document.createElement('script');
-          script.textContent = `
-            try {
-              // Try to access YouTube's player instance
-              const player = document.querySelector('video');
-              if (player) {
-                player.currentTime = ${timestamp};
-                player.play();
-              }
-            } catch (e) {
-              console.error("Error in injected script:", e);
-            }
-          `;
-          document.documentElement.appendChild(script);
-          script.remove();
-        }
-        
-        sendResponse({ success: true });
       } catch (error) {
         console.error("Error seeking to time:", error);
         sendResponse({ success: false, error: error.message });
