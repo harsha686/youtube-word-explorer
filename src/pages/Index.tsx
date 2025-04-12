@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { SearchResult } from "@/types";
 import { 
@@ -6,7 +5,8 @@ import {
   searchInTranscript, 
   getCurrentVideoId, 
   getCurrentVideoTime,
-  seekToTime 
+  seekToTime,
+  checkCaptionsAvailability
 } from "@/services/youtubeService";
 import SearchBar from "@/components/SearchBar";
 import SearchResults from "@/components/SearchResults";
@@ -15,7 +15,7 @@ import ExtensionInfo from "@/components/ExtensionInfo";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Check } from "lucide-react";
+import { Check, AlertCircle, Info } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const Index = () => {
@@ -24,6 +24,8 @@ const Index = () => {
   const [currentTime, setCurrentTime] = useState(0);
   const [activeTab, setActiveTab] = useState("demo");
   const [currentVideoId, setCurrentVideoId] = useState<string>("dQw4w9WgXcQ"); // Default to demo video
+  const [captionsAvailable, setCaptionsAvailable] = useState<boolean | null>(null);
+  const [isYouTubePage, setIsYouTubePage] = useState(false);
   const { toast } = useToast();
   
   useEffect(() => {
@@ -33,15 +35,30 @@ const Index = () => {
         console.log("Fetching current video ID...");
         const videoId = await getCurrentVideoId();
         console.log("Current video ID:", videoId);
+        
+        // Check if we got a real YouTube video ID (not the demo)
+        const isRealVideo = videoId !== "dQw4w9WgXcQ";
+        setIsYouTubePage(isRealVideo);
         setCurrentVideoId(videoId);
         
         // Also get the current time
         const time = await getCurrentVideoTime();
         console.log("Current video time:", time);
         setCurrentTime(time);
+        
+        // Check if captions are available
+        if (isRealVideo) {
+          const hasCaptions = await checkCaptionsAvailability();
+          console.log("Captions available:", hasCaptions);
+          setCaptionsAvailable(hasCaptions);
+        } else {
+          // Demo video always has captions
+          setCaptionsAvailable(true);
+        }
       } catch (error) {
         console.error("Error fetching current video ID:", error);
         // Keep using the default demo video ID if there's an error
+        setCaptionsAvailable(true); // Demo video has captions
       }
     };
     
@@ -112,6 +129,24 @@ const Index = () => {
             Search for words within YouTube videos and jump directly to where they appear
           </p>
         </div>
+
+        {isYouTubePage && captionsAvailable === false && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              This YouTube video doesn't appear to have captions. Word search may not work correctly.
+            </AlertDescription>
+          </Alert>
+        )}
+        
+        {!isYouTubePage && (
+          <Alert variant="default" className="mb-4">
+            <Info className="h-4 w-4" />
+            <AlertDescription>
+              Open a YouTube video in this tab to search for words in that video. Currently showing demo mode.
+            </AlertDescription>
+          </Alert>
+        )}
 
         <Tabs defaultValue="demo" onValueChange={setActiveTab} value={activeTab}>
           <TabsList className="grid w-full grid-cols-2">

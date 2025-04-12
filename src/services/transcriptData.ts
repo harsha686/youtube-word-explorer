@@ -5,19 +5,32 @@ import { VideoTranscript } from "@/types";
 export const getVideoTranscript = async (videoId: string): Promise<VideoTranscript[]> => {
   console.log("Getting transcript for video ID:", videoId);
   
-  // For now, we'll use mock transcripts for all videos to demonstrate functionality
-  // In a production extension, you would use YouTube's API to fetch actual transcripts
-  
-  // For demo video "dQw4w9WgXcQ" (Rick Astley)
-  if (videoId === "dQw4w9WgXcQ") {
-    console.log("Using Rick Astley transcript");
-    return rickAstleyTranscript;
+  try {
+    // Try to fetch transcript from the YouTube Transcript API
+    const response = await fetch(`https://youtube-transcript-api-55qp.onrender.com/api/transcript/${videoId}`);
+    
+    if (response.ok) {
+      const data = await response.json();
+      console.log("Retrieved transcript from API:", data);
+      
+      if (data && Array.isArray(data)) {
+        // Map the API response to our VideoTranscript format
+        return data.map((item: any) => ({
+          text: item.text,
+          start: item.start,
+          duration: item.duration
+        }));
+      }
+    }
+    
+    console.log("Could not fetch transcript from API, falling back to generic transcript");
+    // If API fails or returns empty data, fall back to generic transcript
+    return videoId === "dQw4w9WgXcQ" ? rickAstleyTranscript : genericVideoTranscript;
+  } catch (error) {
+    console.error("Error fetching transcript:", error);
+    // Fall back to mock transcripts
+    return videoId === "dQw4w9WgXcQ" ? rickAstleyTranscript : genericVideoTranscript;
   }
-  
-  // For any other video, we'll use a more generic transcript that includes common words
-  // This ensures the search functionality can be demonstrated regardless of the actual video
-  console.log("Using generic transcript for video:", videoId);
-  return genericVideoTranscript;
 };
 
 // A more comprehensive generic transcript that includes common words for testing

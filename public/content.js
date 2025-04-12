@@ -1,7 +1,9 @@
-
 // Content script that runs on YouTube pages
 (function() {
   console.log("YouTube Word Explorer content script loaded");
+  
+  // Keep track of availability of captions
+  let captionsAvailable = false;
   
   // Function to check if we're on a YouTube video page
   function isYouTubeVideoPage() {
@@ -10,10 +12,49 @@
             window.location.pathname.includes('/embed/'));
   }
   
+  // Function to observe YouTube caption button to detect caption availability
+  function observeCaptionButton() {
+    const observer = new MutationObserver((mutations) => {
+      const captionButton = document.querySelector('.ytp-subtitles-button');
+      if (captionButton) {
+        // Check if aria-pressed="true" is set (captions are available)
+        captionsAvailable = captionButton.getAttribute('aria-disabled') !== 'true';
+        console.log("Caption availability detected:", captionsAvailable);
+        observer.disconnect();
+      }
+    });
+    
+    observer.observe(document.body, { 
+      childList: true, 
+      subtree: true 
+    });
+    
+    // Also check immediately
+    const captionButton = document.querySelector('.ytp-subtitles-button');
+    if (captionButton) {
+      captionsAvailable = captionButton.getAttribute('aria-disabled') !== 'true';
+      console.log("Caption availability detected immediately:", captionsAvailable);
+    }
+  }
+  
   // Initialize on page load
   function initialize() {
     if (isYouTubeVideoPage()) {
       console.log("YouTube Word Explorer active on video page");
+      observeCaptionButton();
+      
+      // Re-check caption availability when navigating between videos
+      // YouTube is a SPA, so we need to observe URL changes
+      const urlObserver = new MutationObserver(() => {
+        if (window.location.href !== lastUrl && isYouTubeVideoPage()) {
+          lastUrl = window.location.href;
+          console.log("URL changed, re-checking caption availability");
+          observeCaptionButton();
+        }
+      });
+      
+      let lastUrl = window.location.href;
+      urlObserver.observe(document.body, { childList: true, subtree: true });
     } else {
       console.log("Not a YouTube video page");
     }
@@ -34,7 +75,12 @@
       // Extract video ID from URL
       const videoId = extractVideoIdFromUrl(window.location.href);
       console.log("Extracted video ID:", videoId);
-      sendResponse({ videoId });
+      
+      // Also check for caption availability
+      sendResponse({ 
+        videoId,
+        captionsAvailable
+      });
       return true; // Keep message channel open for async responses
     }
     
@@ -74,6 +120,21 @@
       } catch (error) {
         console.error("Error seeking to time:", error);
         sendResponse({ success: false, error: error.message });
+      }
+      return true;
+    }
+    
+    if (request.action === "getCaptions") {
+      try {
+        // Check if closed captions are available
+        const captionButton = document.querySelector('.ytp-subtitles-button');
+        const hasCaptions = captionButton ? captionButton.getAttribute('aria-disabled') !== 'true' : false;
+        
+        console.log("Caption availability:", hasCaptions);
+        sendResponse({ hasCaptions });
+      } catch (error) {
+        console.error("Error checking captions:", error);
+        sendResponse({ hasCaptions: false, error: error.message });
       }
       return true;
     }
