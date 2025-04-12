@@ -10,30 +10,12 @@
             window.location.pathname.includes('/embed/'));
   }
   
-  // Add a visible debug element to the page during development
-  function addDebugInfo(message) {
-    console.log("Debug:", message);
-    
-    // Only for development, comment this out for production
-    // const debugElement = document.createElement('div');
-    // debugElement.style.position = 'fixed';
-    // debugElement.style.top = '10px';
-    // debugElement.style.right = '10px';
-    // debugElement.style.zIndex = '9999';
-    // debugElement.style.background = 'rgba(0,0,0,0.7)';
-    // debugElement.style.color = 'white';
-    // debugElement.style.padding = '10px';
-    // debugElement.style.borderRadius = '5px';
-    // debugElement.textContent = message;
-    // document.body.appendChild(debugElement);
-  }
-  
   // Initialize on page load
   function initialize() {
     if (isYouTubeVideoPage()) {
-      addDebugInfo("YouTube Word Explorer active on video page");
+      console.log("YouTube Word Explorer active on video page");
     } else {
-      addDebugInfo("Not a YouTube video page");
+      console.log("Not a YouTube video page");
     }
   }
   
@@ -53,14 +35,12 @@
       const videoId = extractVideoIdFromUrl(window.location.href);
       console.log("Extracted video ID:", videoId);
       sendResponse({ videoId });
-      return true; // This is important to keep the message channel open for async responses
+      return true; // Keep message channel open for async responses
     }
     
     if (request.action === "getCurrentTime") {
-      // Get current time from YouTube player if it exists
       try {
-        // Try to get the player from multiple possible elements
-        // First try the HTML5 video element
+        // Get current time from YouTube player
         let player = document.querySelector('video');
         let currentTime = player ? player.currentTime : 0;
         
@@ -82,10 +62,8 @@
         const videoElement = document.querySelector('video');
         
         if (videoElement) {
-          // Directly set the time on the HTML5 video element
+          // Set the time on the video element
           videoElement.currentTime = timestamp;
-          
-          // Also try to play the video
           videoElement.play().catch(e => console.error("Could not play video:", e));
           
           sendResponse({ success: true });
