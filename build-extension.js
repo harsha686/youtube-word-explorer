@@ -33,6 +33,20 @@ fs.copyFileSync(
   path.join(distDir, 'content.js')
 );
 
+// Verify index.html exists in the dist folder
+if (!fs.existsSync(path.join(distDir, 'index.html'))) {
+  console.log('index.html not found in dist folder, copying from root...');
+  // If not found, copy from the root directory
+  if (fs.existsSync(path.join(__dirname, 'index.html'))) {
+    fs.copyFileSync(
+      path.join(__dirname, 'index.html'),
+      path.join(distDir, 'index.html')
+    );
+  } else {
+    console.error('Error: index.html not found in project root!');
+  }
+}
+
 // Create placeholder icons if they don't exist
 const iconSizes = [16, 48, 128];
 console.log('Creating placeholder icons...');
