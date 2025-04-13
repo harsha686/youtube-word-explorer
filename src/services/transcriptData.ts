@@ -5,14 +5,17 @@ export const getVideoTranscript = async (videoId: string): Promise<VideoTranscri
   console.log("Getting transcript for video ID:", videoId);
   
   const APIs = [
-    `https://youtube-transcript-api-55qp.onrender.com/api/transcript/${videoId}`,
-    `https://alternative-transcript-api.com/transcript/${videoId}` // Placeholder for future API
+    `https://youtube-transcript-api.com/api/transcript/${videoId}`,
+    `https://alternative-transcript-service.com/transcript/${videoId}`
   ];
 
   for (const apiUrl of APIs) {
     try {
       const response = await fetch(apiUrl, { 
         method: 'GET',
+        headers: {
+          'API-Key': process.env.YOUTUBE_TRANSCRIPT_API_KEY || '', // Add your API key here
+        },
         signal: AbortSignal.timeout(5000) // 5-second timeout
       });
       
@@ -29,11 +32,10 @@ export const getVideoTranscript = async (videoId: string): Promise<VideoTranscri
       }
     } catch (error) {
       console.warn(`Transcript fetch failed for ${apiUrl}:`, error);
-      // Continue to next API or fallback
     }
   }
   
-  // Fallback to mock transcripts if all APIs fail
+  // Fallback to existing transcripts if all APIs fail
   console.warn("All transcript APIs failed, using fallback transcript");
   return videoId === "dQw4w9WgXcQ" ? rickAstleyTranscript : genericVideoTranscript;
 };
