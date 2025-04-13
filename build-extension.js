@@ -1,7 +1,13 @@
 
-const fs = require('fs');
-const path = require('path');
-const { execSync } = require('child_process');
+// Use import syntax for ES modules
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { execSync } from 'child_process';
+
+// Get the current directory
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Create dist directory if it doesn't exist
 const distDir = path.join(__dirname, 'dist');
