@@ -1,36 +1,41 @@
 
 import { VideoTranscript } from "@/types";
 
-// Function to get transcript for a YouTube video
 export const getVideoTranscript = async (videoId: string): Promise<VideoTranscript[]> => {
   console.log("Getting transcript for video ID:", videoId);
   
-  try {
-    // Try to fetch transcript from the YouTube Transcript API
-    const response = await fetch(`https://youtube-transcript-api-55qp.onrender.com/api/transcript/${videoId}`);
-    
-    if (response.ok) {
-      const data = await response.json();
-      console.log("Retrieved transcript from API:", data);
+  const APIs = [
+    `https://youtube-transcript-api-55qp.onrender.com/api/transcript/${videoId}`,
+    `https://alternative-transcript-api.com/transcript/${videoId}` // Placeholder for future API
+  ];
+
+  for (const apiUrl of APIs) {
+    try {
+      const response = await fetch(apiUrl, { 
+        method: 'GET',
+        signal: AbortSignal.timeout(5000) // 5-second timeout
+      });
       
-      if (data && Array.isArray(data)) {
-        // Map the API response to our VideoTranscript format
-        return data.map((item: any) => ({
-          text: item.text,
-          start: item.start,
-          duration: item.duration
-        }));
+      if (response.ok) {
+        const data = await response.json();
+        
+        if (data && Array.isArray(data) && data.length > 0) {
+          return data.map((item: any) => ({
+            text: item.text,
+            start: item.start,
+            duration: item.duration
+          }));
+        }
       }
+    } catch (error) {
+      console.warn(`Transcript fetch failed for ${apiUrl}:`, error);
+      // Continue to next API or fallback
     }
-    
-    console.log("Could not fetch transcript from API, falling back to generic transcript");
-    // If API fails or returns empty data, fall back to generic transcript
-    return videoId === "dQw4w9WgXcQ" ? rickAstleyTranscript : genericVideoTranscript;
-  } catch (error) {
-    console.error("Error fetching transcript:", error);
-    // Fall back to mock transcripts
-    return videoId === "dQw4w9WgXcQ" ? rickAstleyTranscript : genericVideoTranscript;
   }
+  
+  // Fallback to mock transcripts if all APIs fail
+  console.warn("All transcript APIs failed, using fallback transcript");
+  return videoId === "dQw4w9WgXcQ" ? rickAstleyTranscript : genericVideoTranscript;
 };
 
 // A more comprehensive generic transcript that includes common words for testing

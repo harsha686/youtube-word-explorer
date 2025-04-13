@@ -1,87 +1,76 @@
-// Content script that runs on YouTube pages
 (function() {
   console.log("YouTube Word Explorer content script loaded");
   
-  // Keep track of availability of captions
+  const YOUTUBE_SELECTORS = {
+    VIDEO_PLAYER: 'video.html5-main-video',
+    CAPTION_BUTTON: '.ytp-subtitles-button',
+    CAPTION_MENU: '.ytp-caption-menu-container'
+  };
+
   let captionsAvailable = false;
   
-  // Function to check if we're on a YouTube video page
   function isYouTubeVideoPage() {
     return window.location.hostname.includes('youtube.com') && 
            (window.location.pathname.includes('/watch') || 
             window.location.pathname.includes('/embed/'));
   }
   
-  // Function to observe YouTube caption button to detect caption availability
-  function observeCaptionButton() {
-    const observer = new MutationObserver((mutations) => {
-      const captionButton = document.querySelector('.ytp-subtitles-button');
-      if (captionButton) {
-        // Check if aria-pressed="true" is set (captions are available)
-        captionsAvailable = captionButton.getAttribute('aria-disabled') !== 'true';
-        console.log("Caption availability detected:", captionsAvailable);
-        observer.disconnect();
-      }
-    });
+  function checkCaptionAvailability() {
+    const captionButton = document.querySelector(YOUTUBE_SELECTORS.CAPTION_BUTTON);
+    const captionMenu = document.querySelector(YOUTUBE_SELECTORS.CAPTION_MENU);
     
-    observer.observe(document.body, { 
-      childList: true, 
-      subtree: true 
-    });
+    captionsAvailable = captionButton && 
+                        captionButton.getAttribute('aria-disabled') !== 'true' &&
+                        captionMenu !== null;
     
-    // Also check immediately
-    const captionButton = document.querySelector('.ytp-subtitles-button');
-    if (captionButton) {
-      captionsAvailable = captionButton.getAttribute('aria-disabled') !== 'true';
-      console.log("Caption availability detected immediately:", captionsAvailable);
-    }
+    console.log("Captions available:", captionsAvailable);
+    return captionsAvailable;
   }
   
-  // Initialize on page load
+  function extractVideoIdFromUrl(url) {
+    try {
+      const urlObj = new URL(url);
+      
+      const videoIdExtractors = [
+        () => urlObj.searchParams.get('v'),
+        () => urlObj.pathname.split('/').pop(),
+        () => urlObj.pathname.split('/embed/')[1]?.split('?')[0]
+      ];
+      
+      for (const extractor of videoIdExtractors) {
+        const videoId = extractor();
+        if (videoId && videoId.length === 11) return videoId;
+      }
+    } catch (error) {
+      console.error("Video ID extraction error:", error);
+    }
+    
+    return null;
+  }
+  
   function initialize() {
     if (isYouTubeVideoPage()) {
       console.log("YouTube Word Explorer active on video page");
-      observeCaptionButton();
-      
-      // Re-check caption availability when navigating between videos
-      // YouTube is a SPA, so we need to observe URL changes
-      const urlObserver = new MutationObserver(() => {
-        if (window.location.href !== lastUrl && isYouTubeVideoPage()) {
-          lastUrl = window.location.href;
-          console.log("URL changed, re-checking caption availability");
-          observeCaptionButton();
-        }
-      });
-      
-      let lastUrl = window.location.href;
-      urlObserver.observe(document.body, { childList: true, subtree: true });
-    } else {
-      console.log("Not a YouTube video page");
+      checkCaptionAvailability();
     }
   }
   
-  // Run initialization after DOM is fully loaded
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initialize);
   } else {
     initialize();
   }
   
-  // Listen for messages from the extension popup
   chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     console.log("Message received in content script:", request);
     
     if (request.action === "getVideoId") {
-      // Extract video ID from URL
       const videoId = extractVideoIdFromUrl(window.location.href);
-      console.log("Extracted video ID:", videoId);
-      
-      // Also check for caption availability
       sendResponse({ 
-        videoId,
-        captionsAvailable
+        videoId, 
+        captionsAvailable: checkCaptionAvailability() 
       });
-      return true; // Keep message channel open for async responses
+      return true;
     }
     
     if (request.action === "getCurrentTime") {
